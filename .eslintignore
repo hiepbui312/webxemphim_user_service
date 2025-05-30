@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+
+# Coverage reports
+coverage/
+.nyc_output/
+
+# Generated files
+*.min.js
+*.min.css
+*.bundle.js
+
+# Logs
+*.log
+
+# Environment files
+.env*
+
+# Public assets
+public/
+static/
+
+# Documentation
+docs/
+
+# Temporary files
+tmp/
+temp/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Config files that might have different rules
+webpack.config.js
+rollup.config.js
+vite.config.js
+jest.config.js
+
+# Generated API documentation
+swagger.json
+openapi.json
+
+# Database files
+*.db
+*.sqlite
+
+# Kubernetes manifests
+k8s/
+*.yaml
+*.yml
+
+# Docker files
+Dockerfile*
+docker-compose*.yml 
