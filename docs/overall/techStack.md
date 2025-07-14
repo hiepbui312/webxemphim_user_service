@@ -42,6 +42,8 @@
 | Thành phần | Technology | Ghi chú |
 |------------|-----------|---------|
 | Container orchestration | **Kubernetes** | Triển khai tất cả service (trừ DB) với Auto-Scaling, Rolling update. |
+| Container runtime | **Docker** | Containerization cho local development và production. |
+| Local development | **Docker Compose** | Orchestration cho local development và testing. |
 | CI/CD | GitHub Actions / GitLab CI | Build, test, push image, apply helm chart. |
 | Secrets | **Vault** / K8s Secrets (SOPS) | Quản lý secret an toàn. |
 | Service Discovery / Ingress | **Ingress-NGINX** | HTTPS, rate-limit, path routing. |
@@ -50,10 +52,12 @@
 ## 7. Dev & Test Tooling
 | Mục đích | Technology |
 |----------|------------|
+| Local Development | **Docker Compose** |
 | Local k8s | **kind** / **k3d** |
-| API Test | **Postman**
+| API Test | **Postman** |
 | Static Analysis | **ESLint**, **Prettier**, **TypeScript** strict |
 | Unit Test | **Jest** |
+| Integration Test | **Jest** + **Supertest** |
 
 ---
 

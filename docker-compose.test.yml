@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Test Database
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: webxemphim_postgres_test
+    ports:
+      - '5433:5432'
+    environment:
+      POSTGRES_DB: webxemphim_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql
+    networks:
+      - webxemphim_test_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # Redis Test Cache
+  redis-test:
+    image: redis:7-alpine
+    container_name: webxemphim_redis_test
+    ports:
+      - '6380:6379'
+    command: redis-server --appendonly no
+    networks:
+      - webxemphim_test_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # RabbitMQ Test Message Queue
+  rabbitmq-test:
+    image: rabbitmq:3-management-alpine
+    container_name: webxemphim_rabbitmq_test
+    ports:
+      - '5673:5672'
+      - '15673:15672'
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    networks:
+      - webxemphim_test_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # NestJS Application for Testing
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: webxemphim_app_test
+    environment:
+      NODE_ENV: test
+      PORT: 3000
+      DB_HOST: postgres-test
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: webxemphim_test
+      REDIS_HOST: redis-test
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq-test
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    networks:
+      - webxemphim_test_network
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run test:e2e
+
+volumes:
+  postgres_test_data:
+
+networks:
+  webxemphim_test_network:
+    driver: bridge 
