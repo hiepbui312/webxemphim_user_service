@@ -7,17 +7,12 @@ import {
   DeleteDateColumn,
   Index,
 } from 'typeorm';
+import { UserPreferences } from '../../../interfaces';
 
 export enum Gender {
   MALE = 'male',
   FEMALE = 'female',
   OTHER = 'other',
-}
-
-export interface UserPreferences {
-  language: string;
-  notifications: boolean;
-  autoplay: boolean;
 }
 
 @Entity('users')

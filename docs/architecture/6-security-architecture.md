@@ -2,35 +2,50 @@
 
 ## 6.1 Authentication & Authorization
 
+**Current Implementation:**
+
 ```typescript
-// JWT Guard
+// JWT Authentication Guard (Implemented)
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-  canActivate(context: ExecutionContext): boolean {
-    // JWT validation logic
-    return super.canActivate(context);
-  }
+  // Validates JWT tokens for protected routes
+  // Used in UserController for /api/v1/users/me endpoints
 }
 
-// Role-based access control
+// JWT Strategy (Implemented)
 @Injectable()
-export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
-  
-  canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
-    if (!requiredRoles) return true;
-    
-    const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.some(role => user.roles?.includes(role));
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  constructor(private appConfigService: AppConfigService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: appConfigService.jwtSecret,
+    });
+  }
+
+  async validate(payload: JwtPayload): Promise<any> {
+    // Validates JWT payload and returns user context
+    return {
+      userId: payload.sub,
+      email: payload.email,
+    };
   }
 }
 ```
 
+**Security Features:**
+- ✅ **JWT Token Validation**: Stateless authentication
+- ✅ **Bearer Token**: Secure token transmission
+- ✅ **Type-Safe Payloads**: JwtPayload interface
+- ✅ **User Context**: AuthenticatedRequest interface
+- 🔄 **Role-Based Access**: Planned for future implementation
+
 ## 6.2 Data Protection
 
+**Current Implementation:**
+
 ```typescript
-// Sensitive data encryption
+// User Entity with security considerations
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -39,12 +54,60 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column({ transformer: encryptionTransformer })
-  personalInfo: string; // Encrypted field
+  @Column()
+  firstName: string;
 
-  @Exclude({ toPlainOnly: true })
-  password: string; // Excluded from responses
+  @Column()
+  lastName: string;
+
+  @Column({ type: 'json' })
+  preferences: UserPreferences; // JSON data type for preferences
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @DeleteDateColumn()
+  deletedAt?: Date; // Soft delete support
 }
 ```
+
+**Security Measures:**
+- ✅ **UUID Primary Keys**: Prevents enumeration attacks
+- ✅ **Soft Delete**: Data retention with privacy compliance
+- ✅ **JSON Preferences**: Structured data storage
+- ✅ **Unique Email**: Prevents duplicate accounts
+- ✅ **TypeScript Types**: Compile-time data validation
+- 🔄 **Password Hashing**: Planned for future auth expansion
+- 🔄 **Field Encryption**: Planned for sensitive data
+
+## 6.3 Configuration Security
+
+**Environment Variable Protection:**
+
+```typescript
+// Centralized configuration with validation
+export class AppConfigService {
+  get jwtSecret(): string {
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+    if (jwtSecret.length < 32) {
+      throw new Error('JWT_SECRET must be at least 32 characters long');
+    }
+    return jwtSecret;
+  }
+}
+```
+
+**Security Benefits:**
+- ✅ **No Default Values**: Prevents weak configuration
+- ✅ **Joi Validation**: Schema-based validation at startup
+- ✅ **Type Safety**: Configuration type checking
+- ✅ **Fail-Fast**: Application won't start with invalid config
+- ✅ **Secret Length Validation**: Enforces strong JWT secrets
 
 ---

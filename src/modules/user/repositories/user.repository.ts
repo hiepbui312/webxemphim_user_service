@@ -59,7 +59,7 @@ export class UserRepository extends Repository<User> {
    */
   async softDeleteUser(userId: string): Promise<boolean> {
     const result = await this.softDelete(userId);
-    return result.affected > 0;
+    return (result.affected ?? 0) > 0;
   }
 
   /**
@@ -67,7 +67,7 @@ export class UserRepository extends Repository<User> {
    */
   async restoreUser(userId: string): Promise<boolean> {
     const result = await this.restore(userId);
-    return result.affected > 0;
+    return (result.affected ?? 0) > 0;
   }
 
   /**

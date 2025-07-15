@@ -1,6 +1,3 @@
--- Initialize development database
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Create development database if not exists
 SELECT 'CREATE DATABASE webxemphim_dev'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'webxemphim_dev')\gexec

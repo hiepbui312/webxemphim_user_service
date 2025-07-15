@@ -1,11 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
-
-export interface UserPreferences {
-  language: string;
-  notifications: boolean;
-  autoplay: boolean;
-}
+import { UserPreferences } from '../../../interfaces';
 
 export class UserProfileResponseDto {
   @ApiProperty({

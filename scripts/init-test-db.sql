@@ -1,6 +1,3 @@
--- Initialize test database
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Create test database if not exists
 SELECT 'CREATE DATABASE webxemphim_test'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'webxemphim_test')\gexec

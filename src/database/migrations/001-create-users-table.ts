@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner, Table, Index } from 'typeorm';
+import { MigrationInterface, QueryRunner, Table, TableIndex } from 'typeorm';
 
 export class CreateUsersTable1703087200000 implements MigrationInterface {
   name = 'CreateUsersTable1703087200000';
@@ -90,7 +90,10 @@ export class CreateUsersTable1703087200000 implements MigrationInterface {
     // Create index for email field
     await queryRunner.createIndex(
       'users',
-      new Index('IDX_USER_EMAIL', ['email']),
+      new TableIndex({
+        name: 'IDX_USER_EMAIL',
+        columnNames: ['email'],
+      })
     );
   }
 

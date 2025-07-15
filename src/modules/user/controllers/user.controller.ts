@@ -19,13 +19,7 @@ import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { UserService } from '../services/user.service';
 import { UserProfileResponseDto } from '../dto/user-profile-response.dto';
 import { UpdateProfileRequestDto } from '../dto/update-profile-request.dto';
-
-interface AuthenticatedRequest extends Request {
-  user: {
-    sub: string; // User ID from JWT
-    email: string;
-  };
-}
+import { AuthenticatedRequest } from '../../../interfaces';
 
 @ApiTags('Users')
 @Controller('api/v1/users')
@@ -71,7 +65,7 @@ export class UserController {
   async getCurrentProfile(
     @Request() req: AuthenticatedRequest,
   ): Promise<UserProfileResponseDto> {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     return this.userService.getCurrentProfile(userId);
   }
 
@@ -166,7 +160,7 @@ export class UserController {
     @Request() req: AuthenticatedRequest,
     @Body() updateProfileDto: UpdateProfileRequestDto,
   ): Promise<UserProfileResponseDto> {
-    const userId = req.user.sub;
+    const userId = req.user.userId;
     return this.userService.updateProfile(userId, updateProfileDto);
   }
 } 
