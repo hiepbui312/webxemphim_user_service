@@ -34,7 +34,7 @@ export class User {
   lastName: string;
 
   @Column({ type: 'varchar', length: 500, nullable: true })
-  avatar: string;
+  avatar: string | null;
 
   @Column({ type: 'date', nullable: true, name: 'date_of_birth' })
   dateOfBirth: Date;
@@ -63,5 +63,5 @@ export class User {
   updatedAt: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deletedAt: Date;
+  deletedAt: Date | null;
 } 

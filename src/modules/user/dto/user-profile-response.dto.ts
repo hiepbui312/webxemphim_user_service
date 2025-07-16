@@ -44,7 +44,7 @@ export class UserProfileResponseDto {
     required: false,
   })
   @Expose()
-  avatar?: string;
+  avatar?: string | null;
 
   @ApiProperty({
     description: 'Date of birth',

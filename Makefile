@@ -20,30 +20,30 @@ help:
 # Build Docker images
 build:
 	@echo "Building Docker images..."
-	docker-compose build
-	docker-compose -f docker-compose.dev.yml build
+	docker compose build
+	docker compose -f docker-compose.dev.yml build
 
 # Start services (production mode)
 start:
 	@echo "Starting services in production mode..."
-	docker-compose up -d
+	docker compose up -d
 
 # Start services in development mode
 dev:
 	@echo "Starting services in development mode..."
-	docker-compose -f docker-compose.dev.yml up -d
+	docker compose -f docker-compose.dev.yml up -d
 
 # Run tests
 test:
 	@echo "Running tests..."
-	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
+	docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
 
 # Stop all services
 stop:
 	@echo "Stopping all services..."
-	docker-compose down
-	docker-compose -f docker-compose.dev.yml down
-	docker-compose -f docker-compose.test.yml down
+	docker compose down
+	docker compose -f docker-compose.dev.yml down
+	docker compose -f docker-compose.test.yml down
 
 # Restart services
 restart: stop start
@@ -51,45 +51,45 @@ restart: stop start
 # Clean containers and volumes
 clean:
 	@echo "Cleaning containers and volumes..."
-	docker-compose down -v --remove-orphans
-	docker-compose -f docker-compose.dev.yml down -v --remove-orphans
-	docker-compose -f docker-compose.test.yml down -v --remove-orphans
+	docker compose down -v --remove-orphans
+	docker compose -f docker-compose.dev.yml down -v --remove-orphans
+	docker compose -f docker-compose.test.yml down -v --remove-orphans
 	docker system prune -f
 
 # Show logs
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 # Show running containers
 ps:
-	docker-compose ps
+	docker compose ps
 
 # Run database migrations
 migrate:
 	@echo "Running database migrations..."
-	docker-compose exec app npm run migration:run
+	docker compose exec app npm run migration:run
 
 # Seed database
 seed:
 	@echo "Seeding database..."
-	docker-compose exec app npm run seed
+	docker compose exec app npm run seed
 
 # Development helpers
 dev-logs:
-	docker-compose -f docker-compose.dev.yml logs -f
+	docker compose -f docker-compose.dev.yml logs -f
 
 dev-shell:
-	docker-compose -f docker-compose.dev.yml exec app sh
+	docker compose -f docker-compose.dev.yml exec app sh
 
 dev-db:
-	docker-compose -f docker-compose.dev.yml exec postgres psql -U postgres -d webxemphim_dev
+	docker compose -f docker-compose.dev.yml exec postgres psql -U postgres -d webxemphim_dev
 
 # Test helpers
 test-logs:
-	docker-compose -f docker-compose.test.yml logs -f
+	docker compose -f docker-compose.test.yml logs -f
 
 test-shell:
-	docker-compose -f docker-compose.test.yml exec app-test sh
+	docker compose -f docker-compose.test.yml exec app-test sh
 
 # Health check
 health:
@@ -99,14 +99,14 @@ health:
 # Install dependencies
 install:
 	@echo "Installing dependencies..."
-	docker-compose -f docker-compose.dev.yml exec app npm install
+	docker compose -f docker-compose.dev.yml exec app npm install
 
 # Run linting
 lint:
 	@echo "Running linter..."
-	docker-compose -f docker-compose.dev.yml exec app npm run lint
+	docker compose -f docker-compose.dev.yml exec app npm run lint
 
 # Run formatting
 format:
 	@echo "Running formatter..."
-	docker-compose -f docker-compose.dev.yml exec app npm run format 
+	docker compose -f docker-compose.dev.yml exec app npm run format 
