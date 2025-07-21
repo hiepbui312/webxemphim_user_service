@@ -69,20 +69,8 @@ services:
     ports:
       - '3000:3000'
       - '9229:9229' # Debug port
-    environment:
-      NODE_ENV: development
-      PORT: 3000
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_DATABASE: webxemphim_dev
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      RABBITMQ_HOST: rabbitmq
-      RABBITMQ_PORT: 5672
-      RABBITMQ_USER: admin
-      RABBITMQ_PASS: admin
+    env_file:
+      - .env
     depends_on:
       postgres:
         condition: service_healthy

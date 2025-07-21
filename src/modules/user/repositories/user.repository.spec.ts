@@ -7,8 +7,7 @@ import { UpdateProfileRequestDto } from '../dto/update-profile-request.dto';
 
 describe('UserRepository', () => {
   let userRepository: UserRepository;
-  let dataSource: jest.Mocked<DataSource>;
-  let entityManager: any;
+  let mockRepository: jest.Mocked<Repository<User>>;
 
   const mockUser: User = {
     id: '550e8400-e29b-41d4-a716-446655440000',
@@ -30,30 +29,36 @@ describe('UserRepository', () => {
   };
 
   beforeEach(async () => {
-    entityManager = {
+    mockRepository = {
       findOne: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
       restore: jest.fn(),
       findAndCount: jest.fn(),
-    };
-
-    const mockDataSource = {
-      createEntityManager: jest.fn().mockReturnValue(entityManager),
-    };
+      metadata: {
+        target: User,
+      } as any,
+    } as any;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UserRepository,
         {
-          provide: DataSource,
-          useValue: mockDataSource,
+          provide: getRepositoryToken(User),
+          useValue: mockRepository,
+        },
+        {
+          provide: UserRepository,
+          useFactory: () => {
+            const repo = new UserRepository();
+            // Inject the mock repository methods
+            Object.assign(repo, mockRepository);
+            return repo;
+          },
         },
       ],
     }).compile();
 
     userRepository = module.get<UserRepository>(UserRepository);
-    dataSource = module.get(DataSource);
   });
 
   afterEach(() => {
@@ -62,33 +67,33 @@ describe('UserRepository', () => {
 
   describe('findByUserId', () => {
     it('should find user by ID successfully', async () => {
-      entityManager.findOne.mockResolvedValue(mockUser);
+      mockRepository.findOne.mockResolvedValue(mockUser);
 
       const result = await userRepository.findByUserId(mockUser.id);
 
       expect(result).toBe(mockUser);
-      expect(entityManager.findOne).toHaveBeenCalledWith({
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: mockUser.id },
       });
     });
 
     it('should return null when user not found', async () => {
-      entityManager.findOne.mockResolvedValue(null);
+      mockRepository.findOne.mockResolvedValue(null);
 
       const result = await userRepository.findByUserId('nonexistent-id');
 
       expect(result).toBeNull();
-      expect(entityManager.findOne).toHaveBeenCalledWith({
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'nonexistent-id' },
       });
     });
 
     it('should exclude soft-deleted users', async () => {
-      entityManager.findOne.mockResolvedValue(null);
+      mockRepository.findOne.mockResolvedValue(null);
 
       await userRepository.findByUserId('soft-deleted-id');
 
-      expect(entityManager.findOne).toHaveBeenCalledWith({
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'soft-deleted-id' },
       });
     });
@@ -96,23 +101,23 @@ describe('UserRepository', () => {
 
   describe('findByEmail', () => {
     it('should find user by email successfully', async () => {
-      entityManager.findOne.mockResolvedValue(mockUser);
+      mockRepository.findOne.mockResolvedValue(mockUser);
 
       const result = await userRepository.findByEmail(mockUser.email);
 
       expect(result).toBe(mockUser);
-      expect(entityManager.findOne).toHaveBeenCalledWith({
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { email: mockUser.email },
       });
     });
 
     it('should return null when user not found', async () => {
-      entityManager.findOne.mockResolvedValue(null);
+      mockRepository.findOne.mockResolvedValue(null);
 
       const result = await userRepository.findByEmail('nonexistent@example.com');
 
       expect(result).toBeNull();
-      expect(entityManager.findOne).toHaveBeenCalledWith({
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { email: 'nonexistent@example.com' },
       });
     });
@@ -133,58 +138,58 @@ describe('UserRepository', () => {
       const updatedUser = { ...mockUser, ...updateDto };
       
       // Mock findByUserId calls
-      entityManager.findOne
+      mockRepository.findOne
         .mockResolvedValueOnce(mockUser) // First call to check if user exists
         .mockResolvedValueOnce(updatedUser); // Second call to return updated user
       
       // Mock update operation
-      entityManager.update.mockResolvedValue({ affected: 1 });
+      mockRepository.update.mockResolvedValue({ affected: 1 });
 
       const result = await userRepository.updateProfile(mockUser.id, updateDto);
 
       expect(result).toEqual(updatedUser);
-      expect(entityManager.findOne).toHaveBeenCalledTimes(2);
-      expect(entityManager.update).toHaveBeenCalledWith(mockUser.id, {
+      expect(mockRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(mockRepository.update).toHaveBeenCalledWith(mockUser.id, {
         ...updateDto,
         updatedAt: expect.any(Date),
       });
     });
 
     it('should return null when user not found', async () => {
-      entityManager.findOne.mockResolvedValue(null);
+      mockRepository.findOne.mockResolvedValue(null);
 
       const result = await userRepository.updateProfile('nonexistent-id', updateDto);
 
       expect(result).toBeNull();
-      expect(entityManager.findOne).toHaveBeenCalledWith({
+      expect(mockRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'nonexistent-id' },
       });
-      expect(entityManager.update).not.toHaveBeenCalled();
+      expect(mockRepository.update).not.toHaveBeenCalled();
     });
 
     it('should return null when update affects no rows', async () => {
-      entityManager.findOne.mockResolvedValue(mockUser);
-      entityManager.update.mockResolvedValue({ affected: 0 });
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.update.mockResolvedValue({ affected: 0 });
 
       const result = await userRepository.updateProfile(mockUser.id, updateDto);
 
       expect(result).toBeNull();
-      expect(entityManager.update).toHaveBeenCalled();
+      expect(mockRepository.update).toHaveBeenCalled();
     });
 
     it('should handle partial updates', async () => {
       const partialUpdate = { firstName: 'OnlyFirst' };
       const partiallyUpdatedUser = { ...mockUser, firstName: 'OnlyFirst' };
 
-      entityManager.findOne
+      mockRepository.findOne
         .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(partiallyUpdatedUser);
-      entityManager.update.mockResolvedValue({ affected: 1 });
+      mockRepository.update.mockResolvedValue({ affected: 1 });
 
       const result = await userRepository.updateProfile(mockUser.id, partialUpdate);
 
       expect(result).toEqual(partiallyUpdatedUser);
-      expect(entityManager.update).toHaveBeenCalledWith(mockUser.id, {
+      expect(mockRepository.update).toHaveBeenCalledWith(mockUser.id, {
         ...partialUpdate,
         updatedAt: expect.any(Date),
       });
@@ -193,25 +198,25 @@ describe('UserRepository', () => {
 
   describe('softDeleteUser', () => {
     it('should soft delete user successfully', async () => {
-      entityManager.softDelete.mockResolvedValue({ affected: 1 });
+      mockRepository.softDelete.mockResolvedValue({ affected: 1 });
 
       const result = await userRepository.softDeleteUser(mockUser.id);
 
       expect(result).toBe(true);
-      expect(entityManager.softDelete).toHaveBeenCalledWith(mockUser.id);
+      expect(mockRepository.softDelete).toHaveBeenCalledWith(mockUser.id);
     });
 
     it('should return false when user not found', async () => {
-      entityManager.softDelete.mockResolvedValue({ affected: 0 });
+      mockRepository.softDelete.mockResolvedValue({ affected: 0 });
 
       const result = await userRepository.softDeleteUser('nonexistent-id');
 
       expect(result).toBe(false);
-      expect(entityManager.softDelete).toHaveBeenCalledWith('nonexistent-id');
+      expect(mockRepository.softDelete).toHaveBeenCalledWith('nonexistent-id');
     });
 
     it('should handle undefined affected count', async () => {
-      entityManager.softDelete.mockResolvedValue({ affected: undefined });
+      mockRepository.softDelete.mockResolvedValue({ affected: undefined });
 
       const result = await userRepository.softDeleteUser(mockUser.id);
 
@@ -221,25 +226,25 @@ describe('UserRepository', () => {
 
   describe('restoreUser', () => {
     it('should restore soft-deleted user successfully', async () => {
-      entityManager.restore.mockResolvedValue({ affected: 1 });
+      mockRepository.restore.mockResolvedValue({ affected: 1 });
 
       const result = await userRepository.restoreUser(mockUser.id);
 
       expect(result).toBe(true);
-      expect(entityManager.restore).toHaveBeenCalledWith(mockUser.id);
+      expect(mockRepository.restore).toHaveBeenCalledWith(mockUser.id);
     });
 
     it('should return false when user not found', async () => {
-      entityManager.restore.mockResolvedValue({ affected: 0 });
+      mockRepository.restore.mockResolvedValue({ affected: 0 });
 
       const result = await userRepository.restoreUser('nonexistent-id');
 
       expect(result).toBe(false);
-      expect(entityManager.restore).toHaveBeenCalledWith('nonexistent-id');
+      expect(mockRepository.restore).toHaveBeenCalledWith('nonexistent-id');
     });
 
     it('should handle undefined affected count', async () => {
-      entityManager.restore.mockResolvedValue({ affected: undefined });
+      mockRepository.restore.mockResolvedValue({ affected: undefined });
 
       const result = await userRepository.restoreUser(mockUser.id);
 
@@ -254,7 +259,7 @@ describe('UserRepository', () => {
     ];
 
     it('should return paginated users successfully', async () => {
-      entityManager.findAndCount.mockResolvedValue([mockUsers, 2]);
+      mockRepository.findAndCount.mockResolvedValue([mockUsers, 2]);
 
       const result = await userRepository.findWithPagination(1, 10);
 
@@ -262,7 +267,7 @@ describe('UserRepository', () => {
         users: mockUsers,
         total: 2,
       });
-      expect(entityManager.findAndCount).toHaveBeenCalledWith({
+      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
         take: 10,
         skip: 0,
         order: { createdAt: 'DESC' },
@@ -270,7 +275,7 @@ describe('UserRepository', () => {
     });
 
     it('should handle second page pagination', async () => {
-      entityManager.findAndCount.mockResolvedValue([[], 2]);
+      mockRepository.findAndCount.mockResolvedValue([[], 2]);
 
       const result = await userRepository.findWithPagination(2, 1);
 
@@ -278,7 +283,7 @@ describe('UserRepository', () => {
         users: [],
         total: 2,
       });
-      expect(entityManager.findAndCount).toHaveBeenCalledWith({
+      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
         take: 1,
         skip: 1,
         order: { createdAt: 'DESC' },
@@ -286,11 +291,11 @@ describe('UserRepository', () => {
     });
 
     it('should use default pagination values', async () => {
-      entityManager.findAndCount.mockResolvedValue([mockUsers, 2]);
+      mockRepository.findAndCount.mockResolvedValue([mockUsers, 2]);
 
       await userRepository.findWithPagination();
 
-      expect(entityManager.findAndCount).toHaveBeenCalledWith({
+      expect(mockRepository.findAndCount).toHaveBeenCalledWith({
         take: 10,
         skip: 0,
         order: { createdAt: 'DESC' },
@@ -298,7 +303,7 @@ describe('UserRepository', () => {
     });
 
     it('should return empty result when no users found', async () => {
-      entityManager.findAndCount.mockResolvedValue([[], 0]);
+      mockRepository.findAndCount.mockResolvedValue([[], 0]);
 
       const result = await userRepository.findWithPagination(1, 10);
 

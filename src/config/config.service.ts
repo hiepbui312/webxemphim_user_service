@@ -37,7 +37,9 @@ export class AppConfigService {
   // JWT Configuration
   get jwtSecret(): string {
     const jwtSecret = this.configService.get<string>('JWT_SECRET');
+   
     if (!jwtSecret) {
+      console.log('jwtSecret', jwtSecret)
       throw new Error('JWT_SECRET environment variable is required');
     }
     if (jwtSecret.length < 32) {
